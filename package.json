@@ -14,13 +14,16 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "bun-plugin-tailwind": "^0.0.15",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.6"
   }
 }
