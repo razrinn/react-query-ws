@@ -2,6 +2,8 @@
 
 Process once, consume everywhere.
 
+![Demo](./docs/demo.gif)
+
 This is a React application that fetches live data from a WebSocket server and displays it on the frontend. This is a minimum Proof of Concept project. Adjust based on your specific requirements.
 
 ## Technologies Used
