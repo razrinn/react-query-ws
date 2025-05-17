@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Button } from '~/frontend/components/ui/button';
-import useWebSocketData from '~/frontend/lib/use-websocket-data';
+import { useLivePriceData } from '~/frontend/lib/use-websocket-data';
 import {
   cn,
   formatPercentage,
@@ -8,7 +7,7 @@ import {
 } from '~/frontend/lib/utils';
 
 const StockPrice = ({ symbol }: { symbol: string }) => {
-  const stockPriceData = useWebSocketData(symbol);
+  const stockPriceData = useLivePriceData(symbol);
   const prevPriceRef = useRef<number | null>(null);
   const [borderClass, setBorderClass] = useState<string>('');
 
@@ -33,12 +32,12 @@ const StockPrice = ({ symbol }: { symbol: string }) => {
   }, [stockPriceData]);
 
   return (
-    <div className={cn('border-4 rounded p-4 flex gap-2', borderClass)}>
+    <div className={cn('border-4 rounded px-4 py-2 flex gap-2', borderClass)}>
       <p className='font-bold'>
         {symbol}{' '}
         {stockPriceData?.currPrice
           ? formatThousandSeparator(stockPriceData.currPrice)
-          : '(NO DATA)'}
+          : '...'}
       </p>
       {stockPriceData && (
         <p
@@ -54,4 +53,7 @@ const StockPrice = ({ symbol }: { symbol: string }) => {
     </div>
   );
 };
+
+StockPrice.displayName = 'StockPrice';
+
 export default StockPrice;

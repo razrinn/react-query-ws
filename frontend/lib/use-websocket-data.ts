@@ -1,13 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import { type StockPrice } from '~/types';
+import { type StockChart, type StockPrice } from '~/types';
 
-const useWebSocketData = (symbol: string) => {
+export const useLivePriceData = (symbol: string) => {
   const { data } = useQuery<StockPrice>({
     queryKey: ['stockPrice', symbol],
-    enabled: false,
+    staleTime: Infinity,
   });
 
   return data;
 };
 
-export default useWebSocketData;
+export const useChartData = (symbol: string) => {
+  const { data } = useQuery<StockChart>({
+    queryKey: ['stockChart', symbol],
+    staleTime: Infinity,
+  });
+
+  return data;
+};

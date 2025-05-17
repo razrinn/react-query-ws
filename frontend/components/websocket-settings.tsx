@@ -22,11 +22,24 @@ const WebsocketSettings = ({ stocks }: { stocks: string[] }) => {
 
     ws.current.onmessage = (event) => {
       const message: WebsocketResponse = JSON.parse(event.data);
-      if (message.type === 'data') {
-        queryClient.setQueryData(
-          ['stockPrice', message.value.symbol],
-          message.value
-        );
+      if (message.type !== 'data') return;
+
+      switch (message.channel) {
+        case 'liveprice':
+          queryClient.setQueryData(
+            ['stockPrice', message.value.symbol],
+            message.value
+          );
+          break;
+        case 'chart':
+          queryClient.setQueryData(
+            ['stockChart', message.value.symbol],
+            message.value
+          );
+          break;
+
+        default:
+          break;
       }
     };
 
@@ -65,6 +78,7 @@ const WebsocketSettings = ({ stocks }: { stocks: string[] }) => {
 
     const req: WebsocketRequest = {
       type: 'subscribe',
+      channel: 'liveprice',
       stocks: uniqueStocks,
     };
 

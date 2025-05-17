@@ -6,6 +6,11 @@ export interface StockPrice {
   changePercent: number;
 }
 
+export interface StockChart {
+  symbol: string;
+  prices: number[];
+}
+
 export type WebsocketRequest =
   | { type: 'pong' }
   | {
@@ -14,6 +19,7 @@ export type WebsocketRequest =
     }
   | {
       type: 'subscribe';
+      channel: 'liveprice' | 'chart';
       stocks: string[];
     };
 
@@ -27,7 +33,13 @@ export type WebsocketResponse =
     }
   | {
       type: 'data';
+      channel: 'liveprice';
       value: StockPrice;
+    }
+  | {
+      type: 'data';
+      channel: 'chart';
+      value: StockChart;
     }
   | {
       type: 'error';

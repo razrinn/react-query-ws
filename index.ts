@@ -23,21 +23,53 @@ const server = Bun.serve({
         const wsReq: WebsocketRequest = JSON.parse(message);
 
         if (wsReq.type === 'subscribe') {
-          for (const stock of stocks) {
-            ws.unsubscribe(`stockprice-${stock}`);
-          }
+          switch (wsReq.channel) {
+            case 'liveprice': {
+              for (const stock of stocks) {
+                ws.unsubscribe(`stockprice-${stock}`);
+              }
 
-          for (const stock of wsReq.stocks) {
-            if (stocks.includes(stock)) {
-              const res: WebsocketResponse = {
-                type: 'data',
-                value: stockPrices.find(
-                  (s) => s.symbol === stock
-                ) as StockPrice,
-              };
-              ws.subscribe(`stockprice-${stock}`);
-              ws.send(JSON.stringify(res));
+              for (const stock of wsReq.stocks) {
+                if (stocks.includes(stock)) {
+                  const res: WebsocketResponse = {
+                    type: 'data',
+                    channel: 'liveprice',
+                    value: stockPrices.find(
+                      (s) => s.symbol === stock
+                    ) as StockPrice,
+                  };
+                  ws.subscribe(`stockprice-${stock}`);
+                  ws.send(JSON.stringify(res));
+                }
+              }
+              break;
             }
+            case 'chart': {
+              for (const stock of stocks) {
+                ws.unsubscribe(`stockchart-${stock}`);
+              }
+
+              for (const stock of wsReq.stocks) {
+                if (stocks.includes(stock)) {
+                  const historyItem = history.get(stock);
+                  if (!historyItem) continue;
+
+                  const res: WebsocketResponse = {
+                    type: 'data',
+                    channel: 'chart',
+                    value: {
+                      symbol: stock,
+                      prices: historyItem,
+                    },
+                  };
+                  ws.subscribe(`stockchart-${stock}`);
+                  ws.send(JSON.stringify(res));
+                }
+              }
+              break;
+            }
+            default:
+              break;
           }
         }
       } catch (error) {
@@ -52,6 +84,8 @@ const server = Bun.serve({
   development: true,
   port: 3000,
 });
+
+console.log(`Server running at http://localhost:${server.port}`);
 
 // Simulate data changes
 const stocks = [
@@ -187,6 +221,7 @@ const stockPrices: StockPrice[] = [
   },
 ];
 
+// Simulate live price changes
 let lastChangedStock: string | null = null;
 const stockProbabilities = new Map<string, number>(
   stocks.map((symbol) => [symbol, 0.5])
@@ -252,6 +287,7 @@ setInterval(() => {
 
   const res: WebsocketResponse = {
     type: 'data',
+    channel: 'liveprice',
     value: randomStock,
   };
 
@@ -261,4 +297,28 @@ setInterval(() => {
   }
 }, 5);
 
-console.log(`Server running at http://localhost:${server.port}`);
+// Simulate chart data, only save latest 20 items, interval every 10 seconds
+const history = new Map<string, number[]>(
+  stockPrices.map((stock) => [stock.symbol, [stock.prevPrice]])
+);
+
+setInterval(() => {
+  for (const [symbol, prices] of history) {
+    if (prices.length > 20) {
+      prices.shift();
+    }
+    const current = stockPrices.find((s) => s.symbol === symbol);
+    if (!current) continue;
+    prices.push(current.currPrice);
+
+    const res: WebsocketResponse = {
+      type: 'data',
+      channel: 'chart',
+      value: {
+        symbol,
+        prices,
+      },
+    };
+    server.publish(`stockchart-${symbol}`, JSON.stringify(res));
+  }
+}, 5000);
