@@ -1,4 +1,9 @@
-import type { StockPrice, WebsocketRequest, WebsocketResponse } from '~/types';
+import type {
+  StockChart,
+  StockPrice,
+  WebsocketRequest,
+  WebsocketResponse,
+} from '~/types';
 import reactHtmlEntry from './public/index.html';
 
 const server = Bun.serve({
@@ -9,6 +14,43 @@ const server = Bun.serve({
       }
 
       return new Response('WebSocket upgrade failed', { status: 400 });
+    },
+    '/api/stockprice/:symbol': (req, server) => {
+      const { symbol } = req.params;
+      if (!stocks.includes(symbol)) {
+        return new Response('Stock not found', { status: 404 });
+      }
+
+      const stockPrice = stockPrices.find((s) => s.symbol === symbol);
+      if (!stockPrice) {
+        return new Response('Stock data not available', { status: 404 });
+      }
+
+      return Response.json(stockPrice);
+    },
+    '/api/stockchart/:symbol': (req, server) => {
+      const { symbol } = req.params;
+      if (!stocks.includes(symbol)) {
+        return new Response('Stock not found', { status: 404 });
+      }
+
+      const stockPrice = stockPrices.find((s) => s.symbol === symbol);
+      if (!stockPrice) {
+        return new Response('Stock data not available', { status: 404 });
+      }
+
+      const prices = history.get(symbol);
+      if (!prices) {
+        return new Response('Stock history not available', { status: 404 });
+      }
+
+      const res: StockChart = {
+        symbol,
+        prev: stockPrice.prevPrice,
+        prices,
+      };
+
+      return Response.json(res);
     },
     '/api/*': (req, server) => {
       return new Response('Not Found', { status: 404 });
@@ -54,11 +96,17 @@ const server = Bun.serve({
                   const historyItem = history.get(stock);
                   if (!historyItem) continue;
 
+                  const stockPrice = stockPrices.find(
+                    (s) => s.symbol === stock
+                  );
+                  if (!stockPrice) continue;
+
                   const res: WebsocketResponse = {
                     type: 'data',
                     channel: 'chart',
                     value: {
                       symbol: stock,
+                      prev: stockPrice.prevPrice,
                       prices: historyItem,
                     },
                   };
@@ -304,7 +352,7 @@ const history = new Map<string, number[]>(
 
 setInterval(() => {
   for (const [symbol, prices] of history) {
-    if (prices.length > 20) {
+    if (prices.length >= 50) {
       prices.shift();
     }
     const current = stockPrices.find((s) => s.symbol === symbol);
@@ -316,9 +364,10 @@ setInterval(() => {
       channel: 'chart',
       value: {
         symbol,
+        prev: current.prevPrice,
         prices,
       },
     };
     server.publish(`stockchart-${symbol}`, JSON.stringify(res));
   }
-}, 5000);
+}, 500);

@@ -55,7 +55,7 @@ const App = () => {
           ))}
         </div>
         <h1 className='text-2xl font-bold'>Reuse Somewhere Else</h1>
-        <div className='grid grid-cols-4 gap-4'>
+        <div className='grid grid-cols-3 2xl:grid-cols-4 gap-4'>
           {idStocks.map((stock) => (
             <StockDetail key={stock} symbol={stock} />
           ))}

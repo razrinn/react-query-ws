@@ -8,6 +8,7 @@ export interface StockPrice {
 
 export interface StockChart {
   symbol: string;
+  prev: number;
   prices: number[];
 }
 
