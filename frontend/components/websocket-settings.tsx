@@ -23,7 +23,6 @@ const WebsocketSettings = ({ stocks }: { stocks: string[] }) => {
     ws.current.onmessage = (event) => {
       const message: WebsocketResponse = JSON.parse(event.data);
       if (message.type !== 'data') return;
-
       switch (message.channel) {
         case 'liveprice':
           queryClient.setQueryData(
@@ -76,16 +75,24 @@ const WebsocketSettings = ({ stocks }: { stocks: string[] }) => {
   useEffect(() => {
     const uniqueStocks = Array.from(new Set(stocks));
 
-    const req: WebsocketRequest = {
+    const req1: WebsocketRequest = {
       type: 'subscribe',
       channel: 'liveprice',
       stocks: uniqueStocks,
     };
 
+    const req2: WebsocketRequest = {
+      type: 'subscribe',
+      channel: 'chart',
+      stocks: uniqueStocks,
+    };
+
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(req));
+      ws.current.send(JSON.stringify(req1));
+      ws.current.send(JSON.stringify(req2));
     } else {
-      queue.current.push(req);
+      queue.current.push(req1);
+      queue.current.push(req2);
     }
   }, [stocks]);
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Line, LineChart, YAxis } from 'recharts';
 import {
   ChartContainer,
@@ -6,13 +6,15 @@ import {
 } from '~/frontend/components/ui/chart';
 import { useChartData } from '~/frontend/lib/use-websocket-data';
 
-const chartConfig = {
-  price: {
-    label: '',
-    color: '#22c55e',
-  },
-} satisfies ChartConfig;
-const StockChart = ({ symbol }: { symbol: string }) => {
+const chartConfig = {} satisfies ChartConfig;
+
+const StockChart = ({
+  symbol,
+  direction,
+}: {
+  symbol: string;
+  direction: 'up' | 'down' | 'equal';
+}) => {
   const chartData = useChartData(symbol);
 
   const data = useMemo(() => {
@@ -20,12 +22,36 @@ const StockChart = ({ symbol }: { symbol: string }) => {
     return chartData.prices.map((price) => ({ price, prev: chartData.prev }));
   }, [chartData]);
 
+  const strokeColor = useMemo(() => {
+    if (direction === 'up') {
+      return '#22c55e';
+    } else if (direction === 'down') {
+      return '#ef4444';
+    }
+    return '#78716c';
+  }, [direction]);
+
   return (
     <ChartContainer config={chartConfig} className='min-h-[80px] w-auto'>
       <LineChart data={data}>
         <YAxis type='number' domain={['dataMin', 'dataMax']} hide />
-        <Line dataKey='price' type='monotone' stroke='#22c55e' dot={false} />
-        {/* <Line dataKey='prev' type='monotone' stroke='#22c55e' dot={false} /> */}
+        <Line
+          isAnimationActive={false}
+          dataKey='price'
+          type='natural'
+          stroke={strokeColor}
+          dot={false}
+          activeDot={false}
+        />
+        <Line
+          isAnimationActive={false}
+          dataKey='prev'
+          type='natural'
+          stroke='#78716c'
+          opacity={0.3}
+          dot={false}
+          activeDot={false}
+        />
       </LineChart>
     </ChartContainer>
   );

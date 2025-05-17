@@ -1,13 +1,22 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, memo } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, EqualIcon } from 'lucide-react';
 import { useLivePriceData } from '~/frontend/lib/use-websocket-data';
 import { cn } from '~/frontend/lib/utils';
 import StockChart from '~/frontend/components/stock-chart';
 
+const MemoizedStockChart = memo(StockChart);
+
 const StockDetail = ({ symbol }: { symbol: string }) => {
   const stockPriceData = useLivePriceData(symbol);
   const prevPriceRef = useRef<number | null>(null);
   const [borderClass, setBorderClass] = useState<string>('');
+
+  const getDirection = (change?: number) => {
+    if (change === undefined) return 'equal';
+    if (change > 0) return 'up';
+    if (change < 0) return 'down';
+    return 'equal';
+  };
 
   useEffect(() => {
     if (!stockPriceData) return;
@@ -65,7 +74,10 @@ const StockDetail = ({ symbol }: { symbol: string }) => {
           </p>
         )}
       </div>
-      <StockChart symbol={symbol} />
+      <MemoizedStockChart
+        symbol={symbol}
+        direction={getDirection(stockPriceData?.change)}
+      />
     </div>
   );
 };

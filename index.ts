@@ -357,6 +357,7 @@ setInterval(() => {
     }
     const current = stockPrices.find((s) => s.symbol === symbol);
     if (!current) continue;
+    if (prices.length > 0) prices[0] = current.prevPrice;
     prices.push(current.currPrice);
 
     const res: WebsocketResponse = {
@@ -370,4 +371,4 @@ setInterval(() => {
     };
     server.publish(`stockchart-${symbol}`, JSON.stringify(res));
   }
-}, 500);
+}, 5000);
