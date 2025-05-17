@@ -21,7 +21,7 @@ const StockDetail = ({ symbol }: { symbol: string }) => {
         setBorderClass('border-red-500');
       }
       // Reset animation after 2 seconds
-      const timer = setTimeout(() => setBorderClass(''), 1000);
+      const timer = setTimeout(() => setBorderClass(''), 500);
       return () => clearTimeout(timer);
     }
 
@@ -29,7 +29,7 @@ const StockDetail = ({ symbol }: { symbol: string }) => {
   }, [stockPriceData]);
 
   return (
-    <div className={cn('p-4 border rounded shadow', borderClass)}>
+    <div className={cn('p-4 border-4 rounded shadow', borderClass)}>
       <h1 className='text-xl font-bold'>{symbol}</h1>
       {stockPriceData && (
         <p className='flex gap-1 items-center'>

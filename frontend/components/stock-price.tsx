@@ -25,7 +25,7 @@ const StockPrice = ({ symbol }: { symbol: string }) => {
         setBorderClass('border-red-500');
       }
       // Reset animation after 2 seconds
-      const timer = setTimeout(() => setBorderClass(''), 1000);
+      const timer = setTimeout(() => setBorderClass(''), 500);
       return () => clearTimeout(timer);
     }
 
@@ -33,7 +33,7 @@ const StockPrice = ({ symbol }: { symbol: string }) => {
   }, [stockPriceData]);
 
   return (
-    <div className={cn('border rounded p-4 flex gap-2', borderClass)}>
+    <div className={cn('border-4 rounded p-4 flex gap-2', borderClass)}>
       <p className='font-bold'>
         {symbol}{' '}
         {stockPriceData?.currPrice
