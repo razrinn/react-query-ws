@@ -188,6 +188,9 @@ const stockPrices: StockPrice[] = [
 ];
 
 let lastChangedStock: string | null = null;
+const stockProbabilities = new Map<string, number>(
+  stocks.map((symbol) => [symbol, 0.5])
+);
 
 setInterval(() => {
   const randomStock = stockPrices[Math.floor(Math.random() * stocks.length)];
@@ -210,13 +213,14 @@ setInterval(() => {
 
   let priceChange: number;
   const randomValue = Math.random();
+  const currentProb = stockProbabilities.get(randomStock.symbol) || 0.5;
 
   if (randomValue < 0.95) {
-    priceChange = 0; // 95% chance
-  } else if (randomValue < 0.975) {
-    priceChange = -priceFraction; // 2.5% chance
+    priceChange = 0; // 95% chance (unchanged)
+  } else if (randomValue < 0.95 + (1 - 0.95) * (1 - currentProb)) {
+    priceChange = -priceFraction; // variable chance based on probability
   } else {
-    priceChange = priceFraction; // 2.5% chance
+    priceChange = priceFraction; // variable chance based on probability
   }
 
   const prevPrice = randomStock.currPrice;
@@ -226,6 +230,25 @@ setInterval(() => {
   randomStock.changePercent =
     ((randomStock.currPrice - randomStock.prevPrice) / randomStock.prevPrice) *
     100;
+
+  // Update probability based on price direction
+  if (priceChange > 0) {
+    stockProbabilities.set(
+      randomStock.symbol,
+      Math.max(
+        0.01,
+        (stockProbabilities.get(randomStock.symbol) || 0.5) - 0.005
+      )
+    );
+  } else if (priceChange < 0) {
+    stockProbabilities.set(
+      randomStock.symbol,
+      Math.min(
+        0.99,
+        (stockProbabilities.get(randomStock.symbol) || 0.5) + 0.005
+      )
+    );
+  }
 
   const res: WebsocketResponse = {
     type: 'data',
