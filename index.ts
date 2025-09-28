@@ -3,45 +3,72 @@ import type {
   StockPrice,
   WebsocketRequest,
   WebsocketResponse,
-} from '~/types';
-import reactHtmlEntry from './public/index.html';
+} from "~/types";
+import reactHtmlEntry from "./public/index.html";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
 
 const server = Bun.serve({
+  fetch(req, server) {
+    if (req.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+    return undefined;
+  },
   routes: {
-    '/ws': (req, server) => {
+    "/ws": (req, server) => {
       if (server.upgrade(req)) {
         return;
       }
 
-      return new Response('WebSocket upgrade failed', { status: 400 });
+      return new Response("WebSocket upgrade failed", { status: 400 });
     },
-    '/api/stockprice/:symbol': (req, server) => {
+    "/api/stockprice/:symbol": (req, server) => {
       const { symbol } = req.params;
       if (!stocks.includes(symbol)) {
-        return new Response('Stock not found', { status: 404 });
+        return new Response("Stock not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
       }
 
       const stockPrice = stockPrices.find((s) => s.symbol === symbol);
       if (!stockPrice) {
-        return new Response('Stock data not available', { status: 404 });
+        return new Response("Stock data not available", {
+          status: 404,
+          headers: corsHeaders,
+        });
       }
 
-      return Response.json(stockPrice);
+      return Response.json(stockPrice, { headers: corsHeaders });
     },
-    '/api/stockchart/:symbol': (req, server) => {
+    "/api/stockchart/:symbol": (req, server) => {
       const { symbol } = req.params;
       if (!stocks.includes(symbol)) {
-        return new Response('Stock not found', { status: 404 });
+        return new Response("Stock not found", {
+          status: 404,
+          headers: corsHeaders,
+        });
       }
 
       const stockPrice = stockPrices.find((s) => s.symbol === symbol);
       if (!stockPrice) {
-        return new Response('Stock data not available', { status: 404 });
+        return new Response("Stock data not available", {
+          status: 404,
+          headers: corsHeaders,
+        });
       }
 
       const prices = history.get(symbol);
       if (!prices) {
-        return new Response('Stock history not available', { status: 404 });
+        return new Response("Stock history not available", {
+          status: 404,
+          headers: corsHeaders,
+        });
       }
 
       const res: StockChart = {
@@ -50,23 +77,23 @@ const server = Bun.serve({
         prices,
       };
 
-      return Response.json(res);
+      return Response.json(res, { headers: corsHeaders });
     },
-    '/api/*': (req, server) => {
-      return new Response('Not Found', { status: 404 });
+    "/api/*": (req, server) => {
+      return new Response("Not Found", { status: 404, headers: corsHeaders });
     },
-    '/*': reactHtmlEntry,
+    "/*": reactHtmlEntry,
   },
   websocket: {
     idleTimeout: 30,
     message(ws, message) {
-      if (typeof message !== 'string') return;
+      if (typeof message !== "string") return;
       try {
         const wsReq: WebsocketRequest = JSON.parse(message);
 
-        if (wsReq.type === 'subscribe') {
+        if (wsReq.type === "subscribe") {
           switch (wsReq.channel) {
-            case 'liveprice': {
+            case "liveprice": {
               for (const stock of stocks) {
                 ws.unsubscribe(`stockprice-${stock}`);
               }
@@ -74,10 +101,10 @@ const server = Bun.serve({
               for (const stock of wsReq.stocks) {
                 if (stocks.includes(stock)) {
                   const res: WebsocketResponse = {
-                    type: 'data',
-                    channel: 'liveprice',
+                    type: "data",
+                    channel: "liveprice",
                     value: stockPrices.find(
-                      (s) => s.symbol === stock
+                      (s) => s.symbol === stock,
                     ) as StockPrice,
                   };
                   ws.subscribe(`stockprice-${stock}`);
@@ -86,7 +113,7 @@ const server = Bun.serve({
               }
               break;
             }
-            case 'chart': {
+            case "chart": {
               for (const stock of stocks) {
                 ws.unsubscribe(`stockchart-${stock}`);
               }
@@ -97,13 +124,13 @@ const server = Bun.serve({
                   if (!historyItem) continue;
 
                   const stockPrice = stockPrices.find(
-                    (s) => s.symbol === stock
+                    (s) => s.symbol === stock,
                   );
                   if (!stockPrice) continue;
 
                   const res: WebsocketResponse = {
-                    type: 'data',
-                    channel: 'chart',
+                    type: "data",
+                    channel: "chart",
                     value: {
                       symbol: stock,
                       prev: stockPrice.prevPrice,
@@ -122,8 +149,8 @@ const server = Bun.serve({
         }
       } catch (error) {
         const res: WebsocketResponse = {
-          type: 'error',
-          error: 'Failed to parse message',
+          type: "error",
+          error: "Failed to parse message",
         };
         ws.send(JSON.stringify(res));
       }
@@ -137,131 +164,131 @@ console.log(`Server running at http://localhost:${server.port}`);
 
 // Simulate data changes
 const stocks = [
-  'BBCA',
-  'TLKM',
-  'UNVR',
-  'ASII',
-  'BMRI',
-  'GMRB',
-  'ADHI',
-  'BBNI',
-  'SMLR',
-  'PRED',
-  'KGRU',
-  'MNCI',
-  'AADI',
-  'PANI',
-  'MAPA',
-  'HPMI',
+  "BBCA",
+  "TLKM",
+  "UNVR",
+  "ASII",
+  "BMRI",
+  "GMRB",
+  "ADHI",
+  "BBNI",
+  "SMLR",
+  "PRED",
+  "KGRU",
+  "MNCI",
+  "AADI",
+  "PANI",
+  "MAPA",
+  "HPMI",
 ];
 const stockPrices: StockPrice[] = [
   {
-    symbol: 'BBCA',
+    symbol: "BBCA",
     prevPrice: 6000,
     currPrice: 6000,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'TLKM',
+    symbol: "TLKM",
     prevPrice: 2700,
     currPrice: 2700,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'UNVR',
+    symbol: "UNVR",
     prevPrice: 1800,
     currPrice: 1800,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'ASII',
+    symbol: "ASII",
     prevPrice: 2500,
     currPrice: 2500,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'BMRI',
+    symbol: "BMRI",
     prevPrice: 5500,
     currPrice: 5500,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'GMRB',
+    symbol: "GMRB",
     prevPrice: 680,
     currPrice: 680,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'ADHI',
+    symbol: "ADHI",
     prevPrice: 2300,
     currPrice: 2300,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'BBNI',
+    symbol: "BBNI",
     prevPrice: 7800,
     currPrice: 7800,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'SMLR',
+    symbol: "SMLR",
     prevPrice: 150,
     currPrice: 150,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'PRED',
+    symbol: "PRED",
     prevPrice: 188,
     currPrice: 188,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'KGRU',
+    symbol: "KGRU",
     prevPrice: 70,
     currPrice: 70,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'MNCI',
+    symbol: "MNCI",
     prevPrice: 900,
     currPrice: 900,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'AADI',
+    symbol: "AADI",
     prevPrice: 4100,
     currPrice: 4100,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'PANI',
+    symbol: "PANI",
     prevPrice: 15000,
     currPrice: 15000,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'MAPA',
+    symbol: "MAPA",
     prevPrice: 3100,
     currPrice: 3100,
     change: 0,
     changePercent: 0,
   },
   {
-    symbol: 'HPMI',
+    symbol: "HPMI",
     prevPrice: 420,
     currPrice: 420,
     change: 0,
@@ -272,7 +299,7 @@ const stockPrices: StockPrice[] = [
 // Simulate live price changes
 let lastChangedStock: string | null = null;
 const stockProbabilities = new Map<string, number>(
-  stocks.map((symbol) => [symbol, 0.5])
+  stocks.map((symbol) => [symbol, 0.5]),
 );
 
 setInterval(() => {
@@ -320,22 +347,22 @@ setInterval(() => {
       randomStock.symbol,
       Math.max(
         0.01,
-        (stockProbabilities.get(randomStock.symbol) || 0.5) - 0.005
-      )
+        (stockProbabilities.get(randomStock.symbol) || 0.5) - 0.005,
+      ),
     );
   } else if (priceChange < 0) {
     stockProbabilities.set(
       randomStock.symbol,
       Math.min(
         0.99,
-        (stockProbabilities.get(randomStock.symbol) || 0.5) + 0.005
-      )
+        (stockProbabilities.get(randomStock.symbol) || 0.5) + 0.005,
+      ),
     );
   }
 
   const res: WebsocketResponse = {
-    type: 'data',
-    channel: 'liveprice',
+    type: "data",
+    channel: "liveprice",
     value: randomStock,
   };
 
@@ -343,11 +370,11 @@ setInterval(() => {
     server.publish(`stockprice-${randomStock.symbol}`, JSON.stringify(res));
     lastChangedStock = randomStock.symbol;
   }
-}, 5);
+}, 1);
 
 // Simulate chart data, only save latest 20 items, interval every 10 seconds
 const history = new Map<string, number[]>(
-  stockPrices.map((stock) => [stock.symbol, [stock.prevPrice]])
+  stockPrices.map((stock) => [stock.symbol, [stock.prevPrice]]),
 );
 
 setInterval(() => {
@@ -361,8 +388,8 @@ setInterval(() => {
     prices.push(current.currPrice);
 
     const res: WebsocketResponse = {
-      type: 'data',
-      channel: 'chart',
+      type: "data",
+      channel: "chart",
       value: {
         symbol,
         prev: current.prevPrice,
@@ -371,4 +398,4 @@ setInterval(() => {
     };
     server.publish(`stockchart-${symbol}`, JSON.stringify(res));
   }
-}, 5000);
+}, 1000);
