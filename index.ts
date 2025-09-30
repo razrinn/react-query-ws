@@ -79,6 +79,9 @@ const server = Bun.serve({
 
       return Response.json(res, { headers: corsHeaders });
     },
+    "/ping": (req, server) => {
+      return new Response(null, { status: 200, headers: corsHeaders });
+    },
     "/api/*": (req, server) => {
       return new Response("Not Found", { status: 404, headers: corsHeaders });
     },
