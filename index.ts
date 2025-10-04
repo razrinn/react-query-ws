@@ -94,7 +94,12 @@ const server = Bun.serve({
       try {
         const wsReq: WebsocketRequest = JSON.parse(message);
 
-        if (wsReq.type === "subscribe") {
+        if (wsReq.type === "pong") {
+          const res: WebsocketResponse = {
+            type: "ping",
+          };
+          ws.send(JSON.stringify(res));
+        } else if (wsReq.type === "subscribe") {
           switch (wsReq.channel) {
             case "liveprice": {
               for (const stock of stocks) {
